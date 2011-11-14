@@ -33,6 +33,8 @@ use WWW::Mechanize;
 use Encode qw/:all/;
 use URI::Escape;
 
+my $VERSION = "0.0.1";
+
 ################################################################################
 ############### Parameter erfassen #############################################
 ################################################################################
@@ -43,6 +45,7 @@ GetOptions(
     \%PARAMS,
     "help" => \&help,
     "verbose",
+    "version" => sub { print $VERSION, "\n"; exit; },
     "user=s",
     "password=s",
     "downloaddir=s",
