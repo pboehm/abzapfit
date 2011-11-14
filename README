@@ -1,0 +1,24 @@
+abzapfit.pl - Automatisiertes Herunterladen aller Dateien aus dem StudIP
+              in die entsprechende lokale Verzeichnisstruktur
+
+Abhängigkeiten:
+    WWW::Mechanize
+    LWP::Protocol::https
+
+Optionen:
+   --help                 : Diesen Hilfetext ausgeben
+   --verbose              : erweiterte Ausgaben
+   --version              : Versionshinweis
+   --user=STRING          : Nutzername für das StudIP
+   --password=STRING      : Passwort für den Account im StudIP
+   --downloaddir=DIR      : Verzeichnis in welches die Dateien
+                            heruntergeladen werden
+   --queuefornewfiles=DIR : Verzeichnis, in welches alle neue Dateien kopiert
+                            werden, sodass sie von da aus weiterverarbeitet
+                            werden können
+   --exclude=REGEX        : Ermöglicht es, Veranstaltungen vom Mirrorn
+                            auszuschließen. Dafür muss ein Regulärer Ausdruck
+                            als String übergeben werden, der auf die jeweilige
+                            Veranstaltung passt.
+                            --> Option kann mehrfach übergeben werden
+
