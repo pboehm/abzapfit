@@ -21,4 +21,10 @@ Optionen:
                             als String übergeben werden, der auf die jeweilige
                             Veranstaltung passt.
                             --> Option kann mehrfach übergeben werden
-
+   --postdownload=FILE    : Möglichkeit der Angabe eines Scriptes, welches für
+                            jede neue heruntergeladene Datei ausgeführt wird und 
+                            dabei den Pfad zur aktuellen Datei als ersten Parameter
+                            und den Namen der Veranstaltung als zweiten Parameter
+                            übergibt. Somit besteht die Möglichkeit der Einflussname
+                            auf neue Dateien. So wäre ein Anwendungsfall, das Entfernen
+                            von Passwörtern von PDF-Dateien ...

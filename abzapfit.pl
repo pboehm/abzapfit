@@ -51,6 +51,7 @@ GetOptions(
     "downloaddir=s",
     "queuefornewfiles=s",
     "exclude=s" => \@EXCLUDES,
+    "postdownload=s",
 ) or die "Fehler bei der Parameterübergabe";
 
 die "Download-Verzeichnis existiert nicht" unless -d $PARAMS{"downloaddir"};
@@ -63,6 +64,9 @@ die "Sie müssen Benutzername und Passwort angeben"
 
 die "Wenn Sie ein Queue-Verzeichnis angeben muss dies auch existieren"
   if ( defined $PARAMS{"queuefornewfiles"} && !-d $PARAMS{"queuefornewfiles"} );
+
+die "Post-Download-Script muss existieren und ausführbar sein"
+  if ( defined $PARAMS{"postdownload"} && !-x $PARAMS{"postdownload"} );
 
 ################################################################################
 ############## Login durchführen ###############################################
@@ -143,10 +147,18 @@ for
             my $file_name = uri_unescape($file_name_escaped);
             next if -f $file_name;
 
-            printf "%s - %s\n", $file_name, $file_id;
+            printf "%s wird heruntergeladen\n", $file_name;
 
             $BROWSER->get($link);
             $BROWSER->save_content($file_name);
+
+            ####
+            # PostDownload-Script ausführen falls angegeben
+            if ( defined $PARAMS{"postdownload"} && -x $PARAMS{"postdownload"} )
+            {
+                system( sprintf "%s %s %s",
+                    $PARAMS{"postdownload"}, $file_name, $event_name );
+            }
 
             ####
             # neue Dateien in Queue-Verzeichnis kopieren
@@ -189,6 +201,13 @@ Usage: $0 [Optionen]
                             als String übergeben werden, der auf die jeweilige
                             Veranstaltung passt.
                             --> Option kann mehrfach übergeben werden
+   --postdownload=FILE    : Möglichkeit der Angabe eines Scriptes, welches für
+                            jede neue heruntergeladene Datei ausgeführt wird und 
+                            dabei den Pfad zur aktuellen Datei als ersten Parameter
+                            und den Namen der Veranstaltung als zweiten Parameter
+                            übergibt. Somit besteht die Möglichkeit der Einflussname
+                            auf neue Dateien. So wäre ein Anwendungsfall, das Entfernen
+                            von Passwörtern von PDF-Dateien ...
 EOF
     exit();
 }
