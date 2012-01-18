@@ -30,6 +30,7 @@ use Getopt::Long;
 use File::Spec::Functions qw{ catfile };
 use File::Copy;
 use WWW::Mechanize;
+use HTML::TreeBuilder;
 use Encode qw/:all/;
 use URI::Escape;
 
@@ -129,7 +130,28 @@ for
     chdir($event_name);
 
     #####
-    # Alle Dateien durchsuchen
+    # Infos über Dateien laden
+    dbmopen( my %FILE_INFOS, ".fileinfo", 0666 );
+
+    #####
+    # Veröffentlichungsdaten laden
+    my %DATES = ();
+    my $root  = HTML::TreeBuilder->new_from_content( $BROWSER->content() );
+    for my $filediv ( $root->look_down( '_tag', 'div', 'class', 'draggable' ) )
+    {
+        if ( my $file_id = $filediv->look_down( 'id', qr/^getmd5_fi.*/ ) ) {
+            my $id = $file_id->as_text();
+
+            if ( my ($date) =
+                $filediv->as_text() =~ /(\d{2}.\d{2}.\d{4}.-.\d{2}:\d{2})/ )
+            {
+                $DATES{$id} = $date;
+            }
+        }
+    }
+
+    #####
+    # Dateien durchlaufen
     for my $filelink_uri (
         $BROWSER->find_all_links(
             url_regex => qr/sendfile.php.*file_id=.*file_name=/
@@ -145,9 +167,22 @@ for
             $link =~ /file_id=(.*)&.*file_name=(.*)/ )
         {
             my $file_name = uri_unescape($file_name_escaped);
-            next if -f $file_name;
+
+            if ( -f $file_name ) {
+
+                if (   defined $FILE_INFOS{$file_name}
+                    && defined $DATES{$file_id}
+                    && ( $FILE_INFOS{$file_name} eq $DATES{$file_id} ) )
+                {
+                    next;
+                }
+
+                printf "%s wurde geändert\n", $file_name;
+            }
 
             printf "%s wird heruntergeladen\n", $file_name;
+
+            $FILE_INFOS{$file_name} = $DATES{$file_id};
 
             $BROWSER->get($link);
             $BROWSER->save_content($file_name);
@@ -169,6 +204,7 @@ for
             }
         }
     }
+    dbmclose(%FILE_INFOS);
     chdir("..");
 }
 
@@ -209,5 +245,6 @@ Usage: $0 [Optionen]
                             auf neue Dateien. So wäre ein Anwendungsfall, das Entfernen
                             von Passwörtern von PDF-Dateien ...
 EOF
+
     exit();
 }
