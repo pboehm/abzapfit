@@ -33,8 +33,9 @@ use WWW::Mechanize;
 use HTML::TreeBuilder;
 use Encode qw/:all/;
 use URI::Escape;
+use Data::Dumper;
 
-my $VERSION = "0.0.2";
+my $VERSION = "0.0.3";
 
 ################################################################################
 ############### Parameter erfassen #############################################
@@ -85,13 +86,13 @@ $BROWSER->get('https://studip.uni-rostock.de/index.php?again=yes');
 
 $BROWSER->form_number(1);
 
-$BROWSER->field( "username", $PARAMS{"user"} );
-$BROWSER->field( "password", $PARAMS{"password"} );
+$BROWSER->field( "loginname", $PARAMS{"user"} );
+$BROWSER->field( "password",  $PARAMS{"password"} );
 
 $BROWSER->click();
 
 die "Login nicht erfolgreich"
-  if defined $BROWSER->form_with_fields( "username", "password" );
+  if defined $BROWSER->form_with_fields( "loginname", "password" );
 
 ################################################################################
 #################### Veranstaltungen mit Dateien suchen ########################
@@ -110,7 +111,7 @@ for
     #####
     # Namen der Veranstaltung aus Seitentitel extrahieren und bereinigen
     # und entsprechendes Verzeichnis anlegen
-    my ($event_name) = $BROWSER->title() =~ /: (.+) -.*$/;
+    my ($event_name) = $BROWSER->title() =~ /: (.+) - Dateien.*$/;
     next unless defined $event_name;
     from_to( $event_name, "cp1252", "utf-8" );
 
@@ -131,24 +132,34 @@ for
 
     #####
     # Infos über Dateien laden
-    dbmopen( my %FILE_INFOS, ".fileinfo", 0666 );
+    # dbmopen( my %FILE_INFOS, ".fileinfo", 0666 );
 
     #####
-    # Veröffentlichungsdaten laden
-    my %DATES = ();
-    my $root  = HTML::TreeBuilder->new_from_content( $BROWSER->content() );
-    for my $filediv ( $root->look_down( '_tag', 'div', 'class', 'draggable' ) )
-    {
-        if ( my $file_id = $filediv->look_down( 'id', qr/^getmd5_fi.*/ ) ) {
-            my $id = $file_id->as_text();
+   # Veröffentlichungsdaten laden
+   # my %DATES = ();
+   # my $root  = HTML::TreeBuilder->new_from_content( $BROWSER->content() );
+   # for my $fileinfo ( $root->look_down( '_tag', 'td', 'class', 'printhead' ) )
+   # {
 
-            if ( my ($date) =
-                $filediv->as_text() =~ /(\d{2}.\d{2}.\d{4}.-.\d{2}:\d{2})/ )
-            {
-                $DATES{$id} = $date;
-            }
-        }
-    }
+#     my $id = $fileinfo->look_down( '_tag', 'input');
+#
+#     if ( my ($date) = $fileinfo->as_text() =~ /(\d{2}.\d{2}.\d{4}.-.\d{2}:\d{2})/ )
+#     {
+#         print $date, "\n";
+#     }
+
+    #     # if ( my $file_id = $filediv->look_down( 'id', qr/^getmd5_fi.*/ ) ) {
+    #     #     my $id = $file_id->as_text();
+
+    #     #     if ( my ($date) =
+    #     #         $filediv->as_text() =~ /(\d{2}.\d{2}.\d{4}.-.\d{2}:\d{2})/ )
+    #     #     {
+    #     #         $DATES{$id} = $date;
+    #     #     }
+    #     # }
+    # }
+
+    # next;
 
     #####
     # Dateien durchlaufen
@@ -170,19 +181,21 @@ for
 
             if ( -f $file_name ) {
 
-                if (   defined $FILE_INFOS{$file_name}
-                    && defined $DATES{$file_id}
-                    && ( $FILE_INFOS{$file_name} eq $DATES{$file_id} ) )
-                {
-                    next;
-                }
+                next;
 
-                printf "%s wurde geändert\n", $file_name;
+                # if (   defined $FILE_INFOS{$file_name}
+                #     && defined $DATES{$file_id}
+                #     && ( $FILE_INFOS{$file_name} eq $DATES{$file_id} ) )
+                # {
+                #     next;
+                # }
+
+                # printf "%s wurde geändert\n", $file_name;
             }
 
             printf "%s wird heruntergeladen\n", $file_name;
 
-            $FILE_INFOS{$file_name} = $DATES{$file_id};
+            # $FILE_INFOS{$file_name} = $DATES{$file_id};
 
             $BROWSER->get($link);
             $BROWSER->save_content($file_name);
@@ -204,7 +217,8 @@ for
             }
         }
     }
-    dbmclose(%FILE_INFOS);
+
+    # dbmclose(%FILE_INFOS);
     chdir("..");
 }
 
