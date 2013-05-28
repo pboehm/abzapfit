@@ -35,7 +35,7 @@ use Encode qw/:all/;
 use URI::Escape;
 use Data::Dumper;
 
-my $VERSION = "0.0.3";
+my $VERSION = "0.0.4";
 
 ################################################################################
 ############### Parameter erfassen #############################################
@@ -131,37 +131,6 @@ for
     chdir($event_name);
 
     #####
-    # Infos über Dateien laden
-    # dbmopen( my %FILE_INFOS, ".fileinfo", 0666 );
-
-    #####
-   # Veröffentlichungsdaten laden
-   # my %DATES = ();
-   # my $root  = HTML::TreeBuilder->new_from_content( $BROWSER->content() );
-   # for my $fileinfo ( $root->look_down( '_tag', 'td', 'class', 'printhead' ) )
-   # {
-
-#     my $id = $fileinfo->look_down( '_tag', 'input');
-#
-#     if ( my ($date) = $fileinfo->as_text() =~ /(\d{2}.\d{2}.\d{4}.-.\d{2}:\d{2})/ )
-#     {
-#         print $date, "\n";
-#     }
-
-    #     # if ( my $file_id = $filediv->look_down( 'id', qr/^getmd5_fi.*/ ) ) {
-    #     #     my $id = $file_id->as_text();
-
-    #     #     if ( my ($date) =
-    #     #         $filediv->as_text() =~ /(\d{2}.\d{2}.\d{4}.-.\d{2}:\d{2})/ )
-    #     #     {
-    #     #         $DATES{$id} = $date;
-    #     #     }
-    #     # }
-    # }
-
-    # next;
-
-    #####
     # Dateien durchlaufen
     for my $filelink_uri (
         $BROWSER->find_all_links(
@@ -178,24 +147,13 @@ for
             $link =~ /file_id=(.*)&.*file_name=(.*)/ )
         {
             my $file_name = uri_unescape($file_name_escaped);
+            from_to( $file_name, "windows-1252", "utf-8" );
 
             if ( -f $file_name ) {
-
                 next;
-
-                # if (   defined $FILE_INFOS{$file_name}
-                #     && defined $DATES{$file_id}
-                #     && ( $FILE_INFOS{$file_name} eq $DATES{$file_id} ) )
-                # {
-                #     next;
-                # }
-
-                # printf "%s wurde geändert\n", $file_name;
             }
 
-            printf "%s wird heruntergeladen\n", $file_name;
-
-            # $FILE_INFOS{$file_name} = $DATES{$file_id};
+            printf "'%s' wird heruntergeladen\n", $file_name;
 
             $BROWSER->get($link);
             $BROWSER->save_content($file_name);
@@ -218,7 +176,6 @@ for
         }
     }
 
-    # dbmclose(%FILE_INFOS);
     chdir("..");
 }
 
@@ -233,7 +190,7 @@ Copyright 2011 Philipp Böhm
 
 Script, welches die Dateien aus dem StudIP lokal mirrort um einen
 einfachen Zugriff auf diese Dateien zu ermöglichen
-    
+
 Usage: $0 [Optionen]
 
    --help                 : Diesen Hilfetext ausgeben
@@ -252,7 +209,7 @@ Usage: $0 [Optionen]
                             Veranstaltung passt.
                             --> Option kann mehrfach übergeben werden
    --postdownload=FILE    : Möglichkeit der Angabe eines Scriptes, welches für
-                            jede neue heruntergeladene Datei ausgeführt wird und 
+                            jede neue heruntergeladene Datei ausgeführt wird und
                             dabei den Pfad zur aktuellen Datei als ersten Parameter
                             und den Namen der Veranstaltung als zweiten Parameter
                             übergibt. Somit besteht die Möglichkeit der Einflussname
